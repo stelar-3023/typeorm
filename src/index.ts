@@ -3,6 +3,7 @@ import { createConnection, Connection } from 'typeorm';
 import express, { Request, Response } from 'express';
 
 import { User } from './entity/User'; // import User entity
+import { Post } from './entity/Post'; // import Post entity
 
 const app = express();
 app.use(express.json());
@@ -81,6 +82,27 @@ app.get('/users/:uuid', async (req: Request, res: Response) => {
     return res.status(404).json({ error: 'User not found.' });
   }
 });
+
+// CREATE A POST
+app.post('/posts', async (req: Request, res: Response) => {
+  const { userUuid, title, body } = req.body;
+
+  try {
+    const user = await User.findOneOrFail({ uuid: userUuid });
+
+    const post = new Post({ title, body, user });
+
+    await post.save();
+
+    return res.json(post)
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({ error: 'Error adding post' });
+  }
+});
+
+// READ POSTS
+
 
 createConnection()
   .then(async (connection) => {
