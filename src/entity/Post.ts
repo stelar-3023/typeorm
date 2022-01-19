@@ -10,6 +10,6 @@ export class Post extends Model {
   @Column()
   body: string;
 
-  @ManyToOne(() => User)
+  @ManyToOne(() => User, (user) => user.posts)
   user: User;
 }
