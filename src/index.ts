@@ -1,6 +1,7 @@
 import 'reflect-metadata';
 import { createConnection, Connection } from 'typeorm';
 import express, { Request, Response } from 'express';
+import { validate } from 'class-validator';
 
 import { User } from './entity/User'; // import User entity
 import { Post } from './entity/Post'; // import Post entity
@@ -16,6 +17,9 @@ app.post('/users', async (req: Request, res: Response) => {
   try {
     const user = User.create({ name, email, role }); // creates an instance of User entity
 
+    const errors = await validate(user); // validate the entity instance
+    if (errors.length > 0) throw errors;
+
     await user.save(); // saves the user to the database
 
     return res.status(201).json(user);
@@ -27,7 +31,7 @@ app.post('/users', async (req: Request, res: Response) => {
 // READ
 app.get('/users', async (_: Request, res: Response) => {
   try {
-    const users = await User.find();
+    const users = await User.find({ relations: ['posts'] }); // get the users with their associated posts
 
     return res.json(users);
   } catch (error) {
@@ -94,7 +98,7 @@ app.post('/posts', async (req: Request, res: Response) => {
 
     await post.save();
 
-    return res.json(post)
+    return res.json(post);
   } catch (error) {
     console.log(error);
     return res.status(500).json({ error: 'Error adding post' });
@@ -102,7 +106,16 @@ app.post('/posts', async (req: Request, res: Response) => {
 });
 
 // READ POSTS
+app.get('/posts', async (re: Request, res: Response) => {
+  try {
+    const posts = await Post.find({ relations: ['user'] }); // get the user associated with the post
 
+    return res.json(posts);
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({ error: 'Error getting posts' });
+  }
+});
 
 createConnection()
   .then(async (connection) => {
